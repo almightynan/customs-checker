@@ -12,25 +12,32 @@ BLACK_TONES = ['#8d5524', '#7d3f1d', '#4b2e1e']
 def get_average_skin_color_hex(frame, face_rect):
     x, y, w, h = face_rect
     face_roi = frame[y:y+h, x:x+w]
+
+    # convert face area to ycrcb to isolate skin colors better
     face_ycrcb = cv2.cvtColor(face_roi, cv2.COLOR_BGR2YCrCb)
     lower = np.array([0, 133, 77], dtype=np.uint8)
     upper = np.array([255, 173, 127], dtype=np.uint8)
+
+    # mask pixels in skin color range
     skin_mask = cv2.inRange(face_ycrcb, lower, upper)
     skin_pixels = cv2.bitwise_and(face_roi, face_roi, mask=skin_mask)
     skin_rgb = cv2.cvtColor(skin_pixels, cv2.COLOR_BGR2RGB)
+
+    # filter out black pixels (not skin)
     non_black = skin_rgb[np.all(skin_rgb != [0, 0, 0], axis=2)]
     if len(non_black) == 0:
         return None, None
+
     avg_color = np.mean(non_black, axis=0).astype(int)
     hex_color = '#{:02x}{:02x}{:02x}'.format(*avg_color)
+
+    # luminance for brightness check (used for classification)
     luminance = (0.2126*avg_color[0] + 0.7152*avg_color[1] + 0.0722*avg_color[2]) / 255
     return hex_color, luminance
 
 def luminance_to_class(lum):
-    if lum > 0.6:
-        return "White"
-    else:
-        return "Black"
+    # classify skin tone as white if bright enough
+    return "White" if lum > 0.6 else "Black"
 
 class SkinColorCustomsApp:
     def __init__(self, root):
@@ -39,23 +46,26 @@ class SkinColorCustomsApp:
         self.root.geometry("1000x600")
         self.root.resizable(False, False)
 
+        # tracking variables
         self.face_detected_time = None
         self.classification_done = False
 
+        # setup home screen
         self.home_frame = tk.Frame(root, bg="#1e1e1e")
         self.home_frame.pack(fill="both", expand=True)
 
         self.title_label = tk.Label(self.home_frame, text="Border Control", font=("Arial", 24, "bold"), fg="white", bg="#1e1e1e")
         self.title_label.pack(pady=(50, 10))
 
-        self.desc_label = tk.Label(self.home_frame, text="""This app verifies identities at borders using facial data. It matches live images to official records through 
-biometric analysis, ensuring "fair" and accurate results across all demographics. Built with global privacy 
+        self.desc_label = tk.Label(self.home_frame, text="""this app verifies identities at borders using facial data. it matches live images to official records through 
+biometric analysis, ensuring "fair" and accurate results across all demographics. built with global privacy 
 standards in mind, it enables secure, fast, and unbiased border control.""", font=("Arial", 14), fg="white", bg="#1e1e1e")
         self.desc_label.pack(pady=(0, 30))
 
         self.start_button = ttk.Button(self.home_frame, text="Start Now", command=self.start_detection)
         self.start_button.pack()
 
+        # setup detection screen
         self.detection_frame = tk.Frame(root, bg="#121212")
 
         self.video_label = tk.Label(self.detection_frame, bg="black")
@@ -92,9 +102,11 @@ standards in mind, it enables secure, fast, and unbiased border control.""", fon
         self.retake_button.pack(pady=30)
         self.retake_button.configure(state='disabled')
 
+        # initialize camera and face detector
         self.cap = None
         self.detecting = False
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
 
     def start_detection(self):
         self.home_frame.pack_forget()
