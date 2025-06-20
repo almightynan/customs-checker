@@ -1,8 +1,8 @@
 # Customs checker
 
-**Customs checker** is a satirical Python application designed to mimic and expose the reductive logic of skin-tone-based profiling, often seen in border control or surveillance systems. It uses real-time face detection, skin color sampling, and visual classification to simulate how simplistic algorithms can be used to enforce biased decisions under the guise of automation.
+**Customs checker** is a satirical application designed to mimic and expose the logic of skin-tone-based profiling, often seen in border control or surveillance systems. It uses real-time face detection, skin color sampling, and visual classification to simulate how simplistic algorithms can be used to enforce biased decisions under the guise of automation.
 
-> **Disclaimer:** This project is a **joke**. It is **not intended** for production use. It aims to illustrate, through mockery, the dangers of building tech that encodes human bias.
+> **Disclaimer:** This project is a **joke**. It is **not intended** for production use.
 
 ---
 
